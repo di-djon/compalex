@@ -24,3 +24,7 @@ Data = {
         $('div.modal-background').removeClass('visible');
     }
 }
+
+$(function(){
+	$('#show-diff').trigger('click')
+});

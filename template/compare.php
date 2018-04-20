@@ -47,7 +47,7 @@
             </td>
             <td class="sp">
                 <a href="#" onclick="Data.showAll(this); return false;" class="active">all</a>
-                <a href="#" onclick="Data.showDiff(this); return false;">changed</a>
+                <a href="#" onclick="Data.showDiff(this); return false;" id="show-diff">changed</a>
 
             </td>
         </tr>
@@ -83,11 +83,13 @@
                         <?php foreach ($data[$blockType] as $fieldName => $tparam) { ?>
                             <li <?php if (isset($tparam['isNew']) && $tparam['isNew']) {
                                 echo 'style="color: red;" class="new" ';
-                            } ?>><b><?php echo $fieldName; ?></b>
-                                <span <?php if (isset($tparam['changeType']) && $tparam['changeType']): ?>style="color: red;" class="new" <?php endif;?>>
-                                    <?php echo $tparam['dtype']; ?>
-                                </span>
-                            </li>
+                            } ?>><b><?php echo $fieldName; ?></b> <?php echo @$tparam['dtype']; ?>
+								<?php if(isset($tparam['anull'])):?>
+									, null <?php echo $tparam['anull']; ?>
+								<?php endif ;?>
+								<?php if(isset($tparam['cdefault'])):?>
+									, default <?php echo $tparam['cdefault']; ?></li>
+								<?php endif ;?>
                         <?php } ?>
                     </ul>
                 <?php } ?>

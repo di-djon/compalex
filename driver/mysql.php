@@ -95,7 +95,9 @@ class Driver extends BaseDriver
         $query = "SELECT
                     cl.TABLE_NAME ARRAY_KEY_1,
                     cl.COLUMN_NAME ARRAY_KEY_2,
-                    cl.COLUMN_TYPE dtype
+                    cl.COLUMN_TYPE dtype,
+					cl.IS_NULLABLE anull,
+					cl.COLUMN_DEFAULT cdefault
                   FROM information_schema.columns cl,  information_schema.TABLES ss
                   WHERE
                     cl.TABLE_NAME = ss.TABLE_NAME AND
@@ -103,7 +105,7 @@ class Driver extends BaseDriver
                     ss.TABLE_TYPE = '{$type}'
                   ORDER BY
                     cl.table_name ";
-        return $this->_getCompareArray($query);
+        return $this->_getCompareArray($query, false, false, ['dtype','anull','cdefault']);
     }
 
     private function _getRoutineResult($type)

@@ -21,9 +21,9 @@ abstract class BaseDriver
     {
         if (!isset($this->_dsn[$dsn])) {
             $pdsn = parse_url($dsn);
-
+			
             $dsn = DRIVER . ':host=' . $pdsn['host'] . ';port=' . $pdsn['port'] . ';dbname=' . substr($pdsn['path'], 1, 1000) . (DRIVER !== 'pgsql' ? ';charset=' . DATABASE_ENCODING : '');
-            $this->_dsn[$dsn] = new PDO($dsn, $pdsn['user'], isset($pdsn['pass']) ? $pdsn['pass'] : '', array(
+			$this->_dsn[$dsn] = new PDO($dsn, $pdsn['user'], isset($pdsn['pass']) ? $pdsn['pass'] : '', array(
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
             ));
@@ -47,7 +47,7 @@ abstract class BaseDriver
     }
 
 
-    protected function _getCompareArray($query, $diffMode = false, $ifOneLevelDiff = false)
+    protected function _getCompareArray($query, $diffMode = false, $ifOneLevelDiff = false, $compareProps = null)
     {
 
         $out = array();
@@ -60,21 +60,35 @@ abstract class BaseDriver
         foreach ($allTables as $v) {
             $allFields = array_unique(array_merge(array_keys((array)@$fArray[$v]), array_keys((array)@$sArray[$v])));
             foreach ($allFields as $f) {
-                switch (true) {
-                    case (!isset($fArray[$v][$f])): {
-                        if(is_array($sArray[$v][$f])) $sArray[$v][$f]['isNew'] = true;
-                        break;
-                    }
-                    case (!isset($sArray[$v][$f])): {
-                        if(is_array($fArray[$v][$f])) $fArray[$v][$f]['isNew'] = true;
-                        break;
-                    }
-                    case (isset($fArray[$v][$f]['dtype']) && isset($sArray[$v][$f]['dtype']) && ($fArray[$v][$f]['dtype'] != $sArray[$v][$f]['dtype'])) : {
-                        $fArray[$v][$f]['changeType'] = true;
-                        $sArray[$v][$f]['changeType'] = true;
-                        break;
-                    }
+                if (!isset($fArray[$v][$f])) {
+                    if(is_array($sArray[$v][$f]))
+					{
+						$sArray[$v][$f]['isNew'] = true;
+						
+						if($compareProps)
+							$this->compareProps($sArray[$v][$f], $fArray[$v][$f], $compareProps);
+					}
                 }
+                if (!isset($sArray[$v][$f])) {
+                    if(is_array($fArray[$v][$f])) 
+					{
+						$fArray[$v][$f]['isNew'] = true;
+						
+						if($compareProps)
+							$this->compareProps($fArray[$v][$f], $sArray[$v][$f], $compareProps);
+					}
+                }
+				
+//				if($compareProps)
+//				{
+//					if(is_array($sArray[$v][$f])){
+//						$this->compareProps($sArray[$v][$f], $fArray[$v][$f], $compareProps);
+//					}
+//
+//					if(is_array($fArray[$v][$f])){
+//						$this->compareProps($fArray[$v][$f], $sArray[$v][$f], $compareProps);
+//					}
+//				}	
             }
             $out[$v] = array(
                 'fArray' => @$fArray[$v],
@@ -83,6 +97,16 @@ abstract class BaseDriver
         }
         return $out;
     }
+	
+	private function compareProps(&$a1, &$a2, $compareProps){
+		foreach ($a1 as $fp => $fv)
+		{
+			if(in_array($fp, $compareProps) && (!is_array($a1) || !is_array($a2) || !array_key_exists ($fp,$a2) || $a2[$fp] != $fv))
+			{
+				$a2['isNew'] = true;
+			}
+		}
+	}
 
     private function _prepareOutArray($result, $diffMode, $ifOneLevelDiff)
     {
